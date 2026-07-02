@@ -31,7 +31,6 @@ BLOCK_HOSTS = (
 # Funcs
 # ========================
 
-
 def block(route):
     # host haye analytics o tabliq ro block mikonim
     if any(host in route.request.url for host in BLOCK_HOSTS):
@@ -45,6 +44,8 @@ def block(route):
 
 def open_browser():
     p = sync_playwright().start()
+
+    t.iteration("Setup")
     t.step("make browser")
 
     Browser = p.chromium.launch(
@@ -87,15 +88,18 @@ def open_browser():
 def search_in_site(Link, page, query: str):
     # commit sari tar az domcontentloaded e
     page.goto(Link, wait_until="commit")
+    t.step("goto search page")
 
     search = page.locator("#searchinput")
 
     # locator ye RPC kamtar mizane
     search.fill(query)
     search.press("Enter")
+    t.step("fill query & submit")
 
     # visible lazem nist, hamin ke peyda she kafiye
     page.wait_for_selector(".cbddtl")
+    t.step("wait for results")
 
     search_items = page.locator("a.cbddtl")
     t.step("process")
@@ -112,6 +116,7 @@ def extract_results(search_items):
         url: e.href
     }))
     """)
+    t.step("extract results")
 
     for i, item in enumerate(results, start=1):
         print(f"{i}. {item['title']}")
@@ -121,7 +126,9 @@ def extract_results(search_items):
 
 def select_app(results):
     choice = int(input("Choose app: "))
-    return results[choice - 1]
+    selected = results[choice - 1]
+    t.step(f"user picked: {selected['title']}")
+    return selected
 
 
 def open_app_page(page, selected_app):
@@ -130,12 +137,12 @@ def open_app_page(page, selected_app):
         selected_app["url"],
         wait_until="commit",
     )
+    t.step("open app page")
 
 
 # ========================
 # Main Loop Running
 # ========================
-
 
 def main():
     Browser, page, p = open_browser()
@@ -146,6 +153,10 @@ def main():
 
             if not query or query.strip().lower() == "exit":
                 break
+
+            # in marker too gozaresh moshakhas mikone in step ha
+            # baraye kodoom iteration o kodoom vorodi e
+            t.iteration(f"Query: '{query}'")
 
             try:
                 search_items = search_in_site(
