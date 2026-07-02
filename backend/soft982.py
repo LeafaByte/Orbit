@@ -3,7 +3,7 @@ from jelo_profiler import Profiler
 t = Profiler()
 def open_browser():
     p = sync_playwright().start()
-    Browser = p.chromium.launch(headless=False)
+    Browser = p.chromium.launch(headless=True) #Set to true for production
     content = Browser.new_context()
     page = content.new_page()
     page.route("**/*", lambda route: route.abort() if route.request.resource_type in ["stylesheet","font","images","media"] else route.continue_())
